@@ -7,6 +7,9 @@ import { KeyboardShortcutsHelp } from '@/components/KeyboardShortcutsHelp';
 import { PageSizeDialog } from '@/components/PageSizeDialog';
 import { PDFMixDialog } from '@/components/PDFMixDialog';
 import { RichTextEditor } from '@/components/RichTextEditor';
+import { PageRangeSelector } from '@/components/PageRangeSelector';
+import { SplitPDFDialog } from '@/components/SplitPDFDialog';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import type { ViewMode, DownloadFormat, PageSelection, DocumentGroup, PageSizeSettings } from '@/types/pdf';
 
 interface ActionBarProps {
@@ -18,8 +21,10 @@ interface ActionBarProps {
   onAddMore: () => void;
   onSelectAll: () => void;
   onDeselectAll: () => void;
+  onSelectByIndices: (indices: number[]) => void;
   onClear: () => void;
   onDownload: (format: DownloadFormat) => void;
+  onSplit: (mode: 'individual' | 'chunks', chunkSize?: number) => void;
   showGroupView: boolean;
   onToggleGroupView: () => void;
   pages: PageSelection[];
@@ -40,8 +45,10 @@ export function ActionBar({
   onAddMore,
   onSelectAll,
   onDeselectAll,
+  onSelectByIndices,
   onClear,
   onDownload,
+  onSplit,
   showGroupView,
   onToggleGroupView,
   pages,
@@ -103,6 +110,12 @@ export function ActionBar({
           )}
         </Button>
         
+        <PageRangeSelector
+          totalPages={totalPages}
+          onSelectRange={onSelectByIndices}
+          disabled={loading}
+        />
+        
         <CompressionDialog
           pages={pages}
           selectedCount={selectedCount}
@@ -122,6 +135,12 @@ export function ActionBar({
           disabled={loading}
         />
         
+        <SplitPDFDialog
+          selectedCount={selectedCount}
+          onSplit={onSplit}
+          disabled={loading}
+        />
+        
         <Button
           variant="ghost"
           size="sm"
@@ -133,6 +152,9 @@ export function ActionBar({
           <span className="hidden sm:inline">Clear</span>
         </Button>
         
+        <div className="hidden sm:block h-6 w-px bg-border" />
+        
+        <ThemeToggle />
         <KeyboardShortcutsHelp />
       </div>
       

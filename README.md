@@ -99,11 +99,10 @@ npm run dev
 - [x] Image to PDF conversion (JPEG, PNG)
 - [x] PDF Mix module (alternating pages)
 - [x] Rich text document creator
-
-### High Priority
-- [ ] Page range selection (e.g., "1-5, 8, 10-12")
-- [ ] Split PDF feature (extract pages as separate files)
-- [ ] Actual PDF encryption (requires server-side or WebCrypto)
+- [x] Page range selection (e.g., "1-5, 8, 10-12")
+- [x] Split PDF feature (extract pages as separate files)
+- [x] Dark mode toggle button
+- [x] Page number labels on thumbnails
 
 ### Medium Priority
 - [ ] OCR support for scanned PDFs
@@ -117,11 +116,10 @@ npm run dev
 - [ ] PDF comparison tool
 - [ ] PDF/A conversion for archiving
 - [ ] Digital signature with certificates
+- [ ] Actual PDF encryption (requires server-side or WebCrypto)
 
 ### UX Improvements
-- [ ] Remember last used settings (localStorage)
 - [ ] Progress indicator for large files
-- [ ] Dark mode toggle button
 - [ ] Drag to select multiple pages
 
 ## 📄 License

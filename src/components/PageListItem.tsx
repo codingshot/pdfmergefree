@@ -1,15 +1,16 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Check, GripVertical, Eye } from 'lucide-react';
+import { Check, GripVertical, Eye, RotateCw } from 'lucide-react';
 import type { PageSelection } from '@/types/pdf';
 
 interface PageListItemProps {
   page: PageSelection;
   onToggle: (id: string) => void;
   onViewDetails: (page: PageSelection) => void;
+  isFocused?: boolean;
 }
 
-export function PageListItem({ page, onToggle, onViewDetails }: PageListItemProps) {
+export function PageListItem({ page, onToggle, onViewDetails, isFocused = false }: PageListItemProps) {
   const {
     attributes,
     listeners,
@@ -30,7 +31,10 @@ export function PageListItem({ page, onToggle, onViewDetails }: PageListItemProp
       style={style}
       className={`flex items-center gap-4 p-3 bg-card rounded-lg border transition-all ${
         page.selected ? 'border-primary/50 bg-accent/30' : 'border-border/50 opacity-60'
-      } ${isDragging ? 'shadow-lg scale-[1.02] z-50' : ''}`}
+      } ${isDragging ? 'shadow-lg scale-[1.02] z-50' : ''} ${
+        isFocused ? 'ring-2 ring-primary' : ''
+      }`}
+      onDoubleClick={() => onViewDetails(page)}
     >
       {/* Drag handle */}
       <button
@@ -48,6 +52,7 @@ export function PageListItem({ page, onToggle, onViewDetails }: PageListItemProp
             src={page.thumbnail}
             alt={`Page ${page.pageNumber}`}
             className="w-full h-full object-contain"
+            style={{ transform: `rotate(${page.rotation}deg)` }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
@@ -58,7 +63,20 @@ export function PageListItem({ page, onToggle, onViewDetails }: PageListItemProp
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-foreground">Page {page.pageNumber}</p>
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-foreground">Page {page.pageNumber}</p>
+          {page.rotation !== 0 && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs bg-muted rounded">
+              <RotateCw className="w-3 h-3" />
+              {page.rotation}°
+            </span>
+          )}
+          {page.annotations.length > 0 && (
+            <span className="px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded">
+              {page.annotations.length} annotations
+            </span>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground truncate">{page.pdfName}</p>
       </div>
 

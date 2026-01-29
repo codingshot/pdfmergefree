@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo } from 'react';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, degrees } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
-import type { PDFFile, PageSelection, DocumentGroup, DownloadFormat } from '@/types/pdf';
+import type { PDFFile, PageSelection, DocumentGroup, DownloadFormat, Annotation } from '@/types/pdf';
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
@@ -13,11 +13,12 @@ export function usePDFProcessor() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [focusedPageIndex, setFocusedPageIndex] = useState<number>(-1);
 
   const generateThumbnail = async (
     arrayBuffer: ArrayBuffer,
     pageNum: number
-  ): Promise<string> => {
+  ): Promise<{ thumbnail: string; size: number }> => {
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer.slice(0) });
     const pdf = await loadingTask.promise;
     const page = await pdf.getPage(pageNum);
@@ -35,7 +36,11 @@ export function usePDFProcessor() {
       viewport: viewport,
     }).promise;
     
-    return canvas.toDataURL('image/jpeg', 0.8);
+    const thumbnail = canvas.toDataURL('image/jpeg', 0.8);
+    // Estimate size based on canvas dimensions
+    const size = Math.round((canvas.width * canvas.height * 3) / 10); // rough estimate
+    
+    return { thumbnail, size };
   };
 
   const addPDFs = useCallback(async (files: FileList | File[]) => {
@@ -66,7 +71,7 @@ export function usePDFProcessor() {
         newFiles.push(pdfFile);
         
         for (let i = 1; i <= pageCount; i++) {
-          const thumbnail = await generateThumbnail(arrayBuffer, i);
+          const { thumbnail, size } = await generateThumbnail(arrayBuffer, i);
           newPages.push({
             id: `${pdfFile.id}-${i}`,
             pdfId: pdfFile.id,
@@ -74,6 +79,10 @@ export function usePDFProcessor() {
             pageNumber: i,
             selected: true,
             thumbnail,
+            rotation: 0,
+            compressionQuality: 1.0,
+            annotations: [],
+            originalSize: size,
           });
         }
       }
@@ -96,6 +105,55 @@ export function usePDFProcessor() {
     );
   }, []);
 
+  const selectAll = useCallback(() => {
+    setPages((prev) => prev.map((page) => ({ ...page, selected: true })));
+  }, []);
+
+  const deselectAll = useCallback(() => {
+    setPages((prev) => prev.map((page) => ({ ...page, selected: false })));
+  }, []);
+
+  const removeSelectedPages = useCallback(() => {
+    setPages((prev) => prev.filter((page) => !page.selected));
+  }, []);
+
+  const rotatePage = useCallback((pageId: string, newRotation: number) => {
+    setPages((prev) =>
+      prev.map((page) =>
+        page.id === pageId ? { ...page, rotation: newRotation } : page
+      )
+    );
+  }, []);
+
+  const rotateSelectedPages = useCallback((direction: 'left' | 'right') => {
+    const delta = direction === 'right' ? 90 : -90;
+    setPages((prev) =>
+      prev.map((page) =>
+        page.selected
+          ? { ...page, rotation: (page.rotation + delta + 360) % 360 }
+          : page
+      )
+    );
+  }, []);
+
+  const updatePageAnnotations = useCallback((pageId: string, annotations: Annotation[]) => {
+    setPages((prev) =>
+      prev.map((page) =>
+        page.id === pageId ? { ...page, annotations } : page
+      )
+    );
+  }, []);
+
+  const compressPages = useCallback((quality: number, _targetSizeKB?: number, applyToAll?: boolean) => {
+    setPages((prev) =>
+      prev.map((page) =>
+        applyToAll || page.selected
+          ? { ...page, compressionQuality: quality }
+          : page
+      )
+    );
+  }, []);
+
   const reorderPages = useCallback((newOrder: PageSelection[]) => {
     setPages(newOrder);
   }, []);
@@ -109,6 +167,7 @@ export function usePDFProcessor() {
     setPdfFiles([]);
     setPages([]);
     setCollapsedGroups(new Set());
+    setFocusedPageIndex(-1);
   }, []);
 
   // Group pages by document
@@ -157,6 +216,38 @@ export function usePDFProcessor() {
     );
   }, []);
 
+  // Navigation
+  const navigateFocus = useCallback((direction: 'up' | 'down' | 'left' | 'right', columns: number = 6) => {
+    if (pages.length === 0) return;
+
+    setFocusedPageIndex((prev) => {
+      if (prev === -1) return 0;
+
+      let next = prev;
+      switch (direction) {
+        case 'left':
+          next = Math.max(0, prev - 1);
+          break;
+        case 'right':
+          next = Math.min(pages.length - 1, prev + 1);
+          break;
+        case 'up':
+          next = Math.max(0, prev - columns);
+          break;
+        case 'down':
+          next = Math.min(pages.length - 1, prev + columns);
+          break;
+      }
+      return next;
+    });
+  }, [pages.length]);
+
+  const toggleFocusedSelection = useCallback(() => {
+    if (focusedPageIndex >= 0 && focusedPageIndex < pages.length) {
+      togglePageSelection(pages[focusedPageIndex].id);
+    }
+  }, [focusedPageIndex, pages, togglePageSelection]);
+
   const mergePDFs = useCallback(async (): Promise<Uint8Array | null> => {
     const selectedPages = pages.filter((p) => p.selected);
     
@@ -175,6 +266,12 @@ export function usePDFProcessor() {
         
         const sourcePdf = await PDFDocument.load(pdfFile.arrayBuffer);
         const [copiedPage] = await mergedPdf.copyPages(sourcePdf, [page.pageNumber - 1]);
+        
+        // Apply rotation
+        if (page.rotation !== 0) {
+          copiedPage.setRotation(degrees(page.rotation));
+        }
+        
         mergedPdf.addPage(copiedPage);
       }
       
@@ -261,6 +358,12 @@ export function usePDFProcessor() {
         const singlePagePdf = await PDFDocument.create();
         const sourcePdf = await PDFDocument.load(pdfFile.arrayBuffer);
         const [copiedPage] = await singlePagePdf.copyPages(sourcePdf, [page.pageNumber - 1]);
+        
+        // Apply rotation
+        if (page.rotation !== 0) {
+          copiedPage.setRotation(degrees(page.rotation));
+        }
+        
         singlePagePdf.addPage(copiedPage);
         
         const pdfBytes = await singlePagePdf.save();
@@ -295,6 +398,15 @@ export function usePDFProcessor() {
     }
   }, [downloadMergedPDF, downloadAsImages, downloadAsZip]);
 
+  // Calculate total estimated size
+  const estimatedSize = useMemo(() => {
+    const selectedPages = pages.filter((p) => p.selected);
+    return selectedPages.reduce((acc, p) => {
+      const originalSize = p.originalSize || 50000;
+      return acc + originalSize * p.compressionQuality;
+    }, 0);
+  }, [pages]);
+
   return {
     pdfFiles,
     pages,
@@ -302,6 +414,13 @@ export function usePDFProcessor() {
     error,
     addPDFs,
     togglePageSelection,
+    selectAll,
+    deselectAll,
+    removeSelectedPages,
+    rotatePage,
+    rotateSelectedPages,
+    updatePageAnnotations,
+    compressPages,
     reorderPages,
     removePDF,
     removeAllPDFs,
@@ -312,5 +431,10 @@ export function usePDFProcessor() {
     toggleGroupCollapse,
     selectAllInGroup,
     deselectAllInGroup,
+    focusedPageIndex,
+    setFocusedPageIndex,
+    navigateFocus,
+    toggleFocusedSelection,
+    estimatedSize,
   };
 }

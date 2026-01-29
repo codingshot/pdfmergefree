@@ -1,7 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Check, ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut } from 'lucide-react';
-import { useState } from 'react';
+import { Check, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Edit } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { RotationControls } from '@/components/RotationControls';
 import type { PageSelection } from '@/types/pdf';
 
 interface PageDetailModalProps {
@@ -10,10 +11,25 @@ interface PageDetailModalProps {
   onClose: () => void;
   onToggle: (id: string) => void;
   onNavigate: (page: PageSelection) => void;
+  onRotate: (pageId: string, rotation: number) => void;
+  onEdit: (page: PageSelection) => void;
 }
 
-export function PageDetailModal({ page, pages, onClose, onToggle, onNavigate }: PageDetailModalProps) {
+export function PageDetailModal({ 
+  page, 
+  pages, 
+  onClose, 
+  onToggle, 
+  onNavigate, 
+  onRotate,
+  onEdit,
+}: PageDetailModalProps) {
   const [zoom, setZoom] = useState(1);
+  
+  // Reset zoom when page changes
+  useEffect(() => {
+    setZoom(1);
+  }, [page?.id]);
   
   if (!page) return null;
 
@@ -40,11 +56,23 @@ export function PageDetailModal({ page, pages, onClose, onToggle, onNavigate }: 
     <Dialog open={!!page} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] p-0 gap-0">
         <DialogHeader className="p-4 border-b">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">
+          <div className="flex items-center justify-between gap-4">
+            <DialogTitle className="text-lg font-semibold truncate">
               Page {page.pageNumber} of {page.pdfName}
             </DialogTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <RotationControls
+                rotation={page.rotation}
+                onRotate={(rotation) => onRotate(page.id, rotation)}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(page)}
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                Edit
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -66,7 +94,9 @@ export function PageDetailModal({ page, pages, onClose, onToggle, onNavigate }: 
                 src={page.thumbnail}
                 alt={`Page ${page.pageNumber}`}
                 className="max-w-full max-h-full object-contain shadow-lg rounded-lg transition-transform"
-                style={{ transform: `scale(${zoom})` }}
+                style={{ 
+                  transform: `scale(${zoom}) rotate(${page.rotation}deg)`,
+                }}
               />
             )}
           </div>
@@ -96,6 +126,12 @@ export function PageDetailModal({ page, pages, onClose, onToggle, onNavigate }: 
         <div className="flex items-center justify-between p-4 border-t bg-card">
           <div className="text-sm text-muted-foreground">
             Page {currentIndex + 1} of {pages.length}
+            {page.rotation !== 0 && (
+              <span className="ml-2 text-primary">• Rotated {page.rotation}°</span>
+            )}
+            {page.annotations.length > 0 && (
+              <span className="ml-2 text-primary">• {page.annotations.length} annotations</span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleZoomOut} disabled={zoom <= 0.5}>

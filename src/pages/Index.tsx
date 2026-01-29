@@ -111,10 +111,10 @@ const Index = () => {
             <FileStack className="w-7 h-7 sm:w-8 sm:h-8 text-primary" />
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2">
-            PDF Merger
+            pdfmerge.free
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-            Combine multiple PDFs into one. Select pages, reorder them, and download your merged document.
+            Free, private PDF merger. Combine, reorder, rotate, and download - all in your browser.
           </p>
         </header>
 

@@ -24,9 +24,10 @@ interface PageGridProps {
   onReorder: (pages: PageSelection[]) => void;
   onToggle: (id: string) => void;
   onViewDetails: (page: PageSelection) => void;
+  focusedIndex?: number;
 }
 
-export function PageGrid({ pages, viewMode, onReorder, onToggle, onViewDetails }: PageGridProps) {
+export function PageGrid({ pages, viewMode, onReorder, onToggle, onViewDetails, focusedIndex = -1 }: PageGridProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -60,23 +61,25 @@ export function PageGrid({ pages, viewMode, onReorder, onToggle, onViewDetails }
       >
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-            {pages.map((page) => (
+            {pages.map((page, index) => (
               <PageCard 
                 key={page.id} 
                 page={page} 
                 onToggle={onToggle} 
                 onViewDetails={onViewDetails}
+                isFocused={index === focusedIndex}
               />
             ))}
           </div>
         ) : (
           <div className="space-y-2">
-            {pages.map((page) => (
+            {pages.map((page, index) => (
               <PageListItem 
                 key={page.id} 
                 page={page} 
                 onToggle={onToggle}
                 onViewDetails={onViewDetails}
+                isFocused={index === focusedIndex}
               />
             ))}
           </div>

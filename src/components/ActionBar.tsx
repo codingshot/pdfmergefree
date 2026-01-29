@@ -2,7 +2,9 @@ import { Trash2, Plus, CheckSquare, Square, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ViewToggle } from '@/components/ViewToggle';
 import { DownloadMenu } from '@/components/DownloadMenu';
-import type { ViewMode, DownloadFormat } from '@/types/pdf';
+import { CompressionDialog } from '@/components/CompressionDialog';
+import { KeyboardShortcutsHelp } from '@/components/KeyboardShortcutsHelp';
+import type { ViewMode, DownloadFormat, PageSelection } from '@/types/pdf';
 
 interface ActionBarProps {
   totalPages: number;
@@ -17,6 +19,8 @@ interface ActionBarProps {
   onDownload: (format: DownloadFormat) => void;
   showGroupView: boolean;
   onToggleGroupView: () => void;
+  pages: PageSelection[];
+  onCompress: (quality: number, targetSizeKB?: number, applyToAll?: boolean) => void;
 }
 
 export function ActionBar({
@@ -32,6 +36,8 @@ export function ActionBar({
   onDownload,
   showGroupView,
   onToggleGroupView,
+  pages,
+  onCompress,
 }: ActionBarProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-card rounded-xl border border-border shadow-sm">
@@ -82,6 +88,13 @@ export function ActionBar({
           )}
         </Button>
         
+        <CompressionDialog
+          pages={pages}
+          selectedCount={selectedCount}
+          onCompress={onCompress}
+          loading={loading}
+        />
+        
         <Button
           variant="ghost"
           size="sm"
@@ -92,6 +105,8 @@ export function ActionBar({
           <Trash2 className="w-4 h-4 sm:mr-2" />
           <span className="hidden sm:inline">Clear</span>
         </Button>
+        
+        <KeyboardShortcutsHelp />
       </div>
       
       {/* Right side - selection count & download */}

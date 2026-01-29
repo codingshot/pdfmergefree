@@ -11,17 +11,28 @@ A free, privacy-focused PDF merger tool that runs entirely in your browser. Comb
 - **Page Thumbnails** - Visual preview of each page for easy identification
 - **Multiple Download Formats** - Download as merged PDF, images (ZIP), or individual pages (ZIP)
 
+### Page Manipulation
+- **Page Rotation** - Rotate pages 90°, 180°, or 270° before merging
+- **Compression** - Compress pages to reduce file size with quality preview
+- **Annotations** - Add highlights, drawings, and signatures to pages
+- **Page Details Modal** - View pages in full size with zoom controls
+
 ### Views & Organization
 - **Grid View** - Visual grid layout for easy page browsing
 - **List View** - Compact list view optimized for reordering
 - **Document Grouping** - Group pages by source document for bulk operations
 - **Collapse/Expand Groups** - Manage large documents by collapsing groups
 
-### Page Details
-- **Page Detail Modal** - Double-click any page to view in larger size
-- **Zoom Controls** - Zoom in/out on page details
-- **Navigation** - Navigate between pages in the detail view
-- **Selection Toggle** - Select/deselect pages from the detail view
+### Keyboard Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+A` | Select all pages |
+| `Ctrl+D` | Deselect all pages |
+| `Delete` | Remove selected pages |
+| `←` `→` `↑` `↓` | Navigate between pages |
+| `R` | Rotate selected pages right (90°) |
+| `Shift+R` | Rotate selected pages left (90°) |
+| `Esc` | Close modal / Deselect |
 
 ### Mobile Responsive
 - Fully responsive design for all screen sizes
@@ -64,32 +75,33 @@ npm run dev
 ## 📋 To-Do / Future Ideas
 
 ### High Priority
-- [ ] Rotate individual pages (90°, 180°, 270°)
+- [x] ~~Rotate individual pages (90°, 180°, 270°)~~
+- [x] ~~Keyboard shortcuts~~
+- [x] ~~Compression with size preview~~
+- [x] ~~Annotations (highlights, signatures)~~
+- [ ] Page range selection (e.g., "1-5, 8, 10-12")
 - [ ] Split PDF feature (extract pages as separate files)
 - [ ] PDF password/encryption support
-- [ ] Page range selection (e.g., "1-5, 8, 10-12")
 
 ### Medium Priority
-- [ ] Add text annotations to pages
-- [ ] Compress PDF (reduce file size)
 - [ ] OCR support for scanned PDFs
 - [ ] PDF form filling
 - [ ] Watermark support
+- [ ] Undo/Redo for page operations
+- [ ] Batch processing multiple merges
 
 ### Low Priority / Nice to Have
 - [ ] Cloud storage integration (Google Drive, Dropbox)
 - [ ] PDF comparison tool
-- [ ] Batch processing multiple merges
 - [ ] Custom page sizes/margins
 - [ ] PDF/A conversion for archiving
-- [ ] Digital signature support
+- [ ] Digital signature with certificates
 
 ### UX Improvements
-- [ ] Keyboard shortcuts (Ctrl+A for select all, Delete for remove, etc.)
-- [ ] Undo/Redo functionality
+- [ ] Remember last used settings (localStorage)
 - [ ] Progress indicator for large files
-- [ ] Remember last used settings
-- [ ] Dark mode support
+- [ ] Dark mode toggle button
+- [ ] Drag to select multiple pages
 
 ## 📄 License
 

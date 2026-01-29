@@ -1,15 +1,16 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Check, GripVertical, Eye } from 'lucide-react';
+import { Check, GripVertical, Eye, RotateCw } from 'lucide-react';
 import type { PageSelection } from '@/types/pdf';
 
 interface PageCardProps {
   page: PageSelection;
   onToggle: (id: string) => void;
   onViewDetails: (page: PageSelection) => void;
+  isFocused?: boolean;
 }
 
-export function PageCard({ page, onToggle, onViewDetails }: PageCardProps) {
+export function PageCard({ page, onToggle, onViewDetails, isFocused = false }: PageCardProps) {
   const {
     attributes,
     listeners,
@@ -30,22 +31,38 @@ export function PageCard({ page, onToggle, onViewDetails }: PageCardProps) {
       style={style}
       className={`page-card group ${page.selected ? 'page-card-selected' : 'opacity-50'} ${
         isDragging ? 'dragging' : ''
-      }`}
+      } ${isFocused ? 'ring-2 ring-primary ring-offset-2' : ''}`}
       onDoubleClick={() => onViewDetails(page)}
     >
       <div className="relative">
         {/* Thumbnail */}
-        <div className="page-thumbnail">
+        <div className="page-thumbnail overflow-hidden">
           {page.thumbnail ? (
             <img
               src={page.thumbnail}
               alt={`Page ${page.pageNumber}`}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain transition-transform"
+              style={{ transform: `rotate(${page.rotation}deg)` }}
             />
           ) : (
             <div className="text-muted-foreground text-sm">Loading...</div>
           )}
         </div>
+        
+        {/* Rotation indicator */}
+        {page.rotation !== 0 && (
+          <div className="absolute bottom-2 left-2 p-1 rounded bg-card/90 backdrop-blur-sm text-xs flex items-center gap-1">
+            <RotateCw className="w-3 h-3" />
+            {page.rotation}°
+          </div>
+        )}
+        
+        {/* Annotations indicator */}
+        {page.annotations.length > 0 && (
+          <div className="absolute bottom-2 right-10 px-1.5 py-0.5 rounded bg-primary/90 text-primary-foreground text-xs">
+            {page.annotations.length}
+          </div>
+        )}
         
         {/* Drag handle */}
         <button
@@ -61,6 +78,7 @@ export function PageCard({ page, onToggle, onViewDetails }: PageCardProps) {
           onClick={() => onViewDetails(page)}
           className="absolute bottom-2 left-2 p-1.5 rounded-lg bg-card/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
           aria-label="View page details"
+          style={{ display: page.rotation !== 0 ? 'none' : undefined }}
         >
           <Eye className="w-4 h-4 text-muted-foreground" />
         </button>

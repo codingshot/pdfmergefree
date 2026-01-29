@@ -13,6 +13,10 @@ export interface PageSelection {
   pageNumber: number;
   selected: boolean;
   thumbnail?: string;
+  rotation: number; // 0, 90, 180, 270
+  compressionQuality: number; // 0.1 to 1.0
+  annotations: Annotation[];
+  originalSize?: number; // bytes
 }
 
 export type ViewMode = 'grid' | 'list';
@@ -25,4 +29,22 @@ export interface DocumentGroup {
   pages: PageSelection[];
   allSelected: boolean;
   collapsed: boolean;
+}
+
+export interface Annotation {
+  id: string;
+  type: 'highlight' | 'signature' | 'text' | 'drawing';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color?: string;
+  content?: string; // for text or signature data URL
+  points?: { x: number; y: number }[]; // for drawing
+}
+
+export interface CompressionSettings {
+  enabled: boolean;
+  quality: number; // 0.1 to 1.0
+  targetSizeKB?: number;
 }

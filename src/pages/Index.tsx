@@ -1,12 +1,14 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { FileStack } from 'lucide-react';
 import { PDFDropZone } from '@/components/PDFDropZone';
 import { PageGrid } from '@/components/PageGrid';
 import { ActionBar } from '@/components/ActionBar';
 import { PageDetailModal } from '@/components/PageDetailModal';
 import { DocumentGroupView } from '@/components/DocumentGroupView';
+import { AnnotationEditor } from '@/components/AnnotationEditor';
 import { usePDFProcessor } from '@/hooks/usePDFProcessor';
-import type { PageSelection, ViewMode } from '@/types/pdf';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import type { PageSelection, ViewMode, Annotation } from '@/types/pdf';
 
 const Index = () => {
   const {
@@ -15,6 +17,13 @@ const Index = () => {
     error,
     addPDFs,
     togglePageSelection,
+    selectAll,
+    deselectAll,
+    removeSelectedPages,
+    rotatePage,
+    rotateSelectedPages,
+    updatePageAnnotations,
+    compressPages,
     reorderPages,
     removeAllPDFs,
     download,
@@ -23,31 +32,63 @@ const Index = () => {
     toggleGroupCollapse,
     selectAllInGroup,
     deselectAllInGroup,
+    focusedPageIndex,
+    navigateFocus,
   } = usePDFProcessor();
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showGroupView, setShowGroupView] = useState(false);
   const [selectedPage, setSelectedPage] = useState<PageSelection | null>(null);
+  const [editingPage, setEditingPage] = useState<PageSelection | null>(null);
 
-  const handleSelectAll = useCallback(() => {
-    pages.forEach((page) => {
-      if (!page.selected) {
-        togglePageSelection(page.id);
+  // Update selected page when pages change (e.g., after rotation)
+  useEffect(() => {
+    if (selectedPage) {
+      const updated = pages.find((p) => p.id === selectedPage.id);
+      if (updated) {
+        setSelectedPage(updated);
       }
-    });
-  }, [pages, togglePageSelection]);
-
-  const handleDeselectAll = useCallback(() => {
-    pages.forEach((page) => {
-      if (page.selected) {
-        togglePageSelection(page.id);
-      }
-    });
-  }, [pages, togglePageSelection]);
+    }
+  }, [pages, selectedPage]);
 
   const handleViewDetails = useCallback((page: PageSelection) => {
     setSelectedPage(page);
   }, []);
+
+  const handleEditPage = useCallback((page: PageSelection) => {
+    setEditingPage(page);
+  }, []);
+
+  const handleSaveAnnotations = useCallback((pageId: string, annotations: Annotation[]) => {
+    updatePageAnnotations(pageId, annotations);
+  }, [updatePageAnnotations]);
+
+  const handleRotate = useCallback((pageId: string, rotation: number) => {
+    rotatePage(pageId, rotation);
+  }, [rotatePage]);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSelectAll: selectAll,
+    onDeselectAll: deselectAll,
+    onDelete: removeSelectedPages,
+    onNavigateUp: () => navigateFocus('up'),
+    onNavigateDown: () => navigateFocus('down'),
+    onNavigateLeft: () => navigateFocus('left'),
+    onNavigateRight: () => navigateFocus('right'),
+    onRotateRight: () => rotateSelectedPages('right'),
+    onRotateLeft: () => rotateSelectedPages('left'),
+    onEscape: () => {
+      if (editingPage) {
+        setEditingPage(null);
+      } else if (selectedPage) {
+        setSelectedPage(null);
+      } else {
+        deselectAll();
+      }
+    },
+    enabled: pages.length > 0 && !editingPage,
+  });
 
   return (
     <div className="min-h-screen gradient-mesh">
@@ -87,12 +128,14 @@ const Index = () => {
               viewMode={viewMode}
               onViewModeChange={setViewMode}
               onAddMore={() => document.getElementById('pdf-input-hidden')?.click()}
-              onSelectAll={handleSelectAll}
-              onDeselectAll={handleDeselectAll}
+              onSelectAll={selectAll}
+              onDeselectAll={deselectAll}
               onClear={removeAllPDFs}
               onDownload={download}
               showGroupView={showGroupView}
               onToggleGroupView={() => setShowGroupView(!showGroupView)}
+              pages={pages}
+              onCompress={compressPages}
             />
 
             {/* Hidden file input for adding more PDFs */}
@@ -114,8 +157,10 @@ const Index = () => {
             <div className="p-4 sm:p-6 bg-card/50 backdrop-blur-sm rounded-2xl border border-border/50">
               <div className="flex items-center gap-2 mb-4 text-xs sm:text-sm text-muted-foreground">
                 <span>💡</span>
-                <span className="hidden sm:inline">Drag pages to reorder. Click checkmark to select/deselect. Double-click to view details.</span>
-                <span className="sm:hidden">Drag to reorder. Tap checkmark to select.</span>
+                <span className="hidden sm:inline">
+                  Drag to reorder • Click ✓ to select • Double-click to view • Press R to rotate • Ctrl+A to select all
+                </span>
+                <span className="sm:hidden">Drag to reorder • Tap ✓ to select</span>
               </div>
               
               {showGroupView ? (
@@ -135,6 +180,7 @@ const Index = () => {
                   onReorder={reorderPages}
                   onToggle={togglePageSelection}
                   onViewDetails={handleViewDetails}
+                  focusedIndex={focusedPageIndex}
                 />
               )}
             </div>
@@ -154,6 +200,15 @@ const Index = () => {
         onClose={() => setSelectedPage(null)}
         onToggle={togglePageSelection}
         onNavigate={setSelectedPage}
+        onRotate={handleRotate}
+        onEdit={handleEditPage}
+      />
+
+      {/* Annotation editor */}
+      <AnnotationEditor
+        page={editingPage}
+        onClose={() => setEditingPage(null)}
+        onSave={handleSaveAnnotations}
       />
     </div>
   );

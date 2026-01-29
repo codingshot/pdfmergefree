@@ -56,8 +56,3 @@ export interface PageSizeSettings {
   height: number;
   orientation: 'portrait' | 'landscape';
 }
-
-export interface PDFExportSettings {
-  password?: string;
-  pageSize: PageSizeSettings;
-}

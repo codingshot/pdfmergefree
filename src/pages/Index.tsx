@@ -34,8 +34,8 @@ const Index = () => {
     deselectAllInGroup,
     focusedPageIndex,
     navigateFocus,
-    exportSettings,
-    updateExportSettings,
+    pageSize,
+    updatePageSize,
     htmlToPDF,
   } = usePDFProcessor();
 
@@ -141,8 +141,8 @@ const Index = () => {
               onCompress={compressPages}
               documentGroups={documentGroups}
               onMixPages={reorderPages}
-              exportSettings={exportSettings}
-              onUpdateExportSettings={updateExportSettings}
+              pageSize={pageSize}
+              onPageSizeChange={updatePageSize}
               onCreateDocument={htmlToPDF}
             />
 

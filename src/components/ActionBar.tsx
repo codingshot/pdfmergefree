@@ -4,11 +4,10 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { DownloadMenu } from '@/components/DownloadMenu';
 import { CompressionDialog } from '@/components/CompressionDialog';
 import { KeyboardShortcutsHelp } from '@/components/KeyboardShortcutsHelp';
-import { PasswordProtectionDialog } from '@/components/PasswordProtectionDialog';
 import { PageSizeDialog } from '@/components/PageSizeDialog';
 import { PDFMixDialog } from '@/components/PDFMixDialog';
 import { RichTextEditor } from '@/components/RichTextEditor';
-import type { ViewMode, DownloadFormat, PageSelection, DocumentGroup, PageSizeSettings, PDFExportSettings } from '@/types/pdf';
+import type { ViewMode, DownloadFormat, PageSelection, DocumentGroup, PageSizeSettings } from '@/types/pdf';
 
 interface ActionBarProps {
   totalPages: number;
@@ -27,8 +26,8 @@ interface ActionBarProps {
   onCompress: (quality: number, targetSizeKB?: number, applyToAll?: boolean) => void;
   documentGroups: DocumentGroup[];
   onMixPages: (mixedPages: PageSelection[]) => void;
-  exportSettings: PDFExportSettings;
-  onUpdateExportSettings: (settings: Partial<PDFExportSettings>) => void;
+  pageSize: PageSizeSettings;
+  onPageSizeChange: (settings: PageSizeSettings) => void;
   onCreateDocument: (name: string, htmlContent: string) => void;
 }
 
@@ -49,8 +48,8 @@ export function ActionBar({
   onCompress,
   documentGroups,
   onMixPages,
-  exportSettings,
-  onUpdateExportSettings,
+  pageSize,
+  onPageSizeChange,
   onCreateDocument,
 }: ActionBarProps) {
   return (
@@ -111,16 +110,9 @@ export function ActionBar({
           loading={loading}
         />
         
-        <PasswordProtectionDialog
-          enabled={!!exportSettings.password}
-          password={exportSettings.password || ''}
-          onPasswordChange={(password) => onUpdateExportSettings({ password: password || undefined })}
-          onEnabledChange={() => {}}
-        />
-        
         <PageSizeDialog
-          settings={exportSettings.pageSize}
-          onSettingsChange={(pageSize) => onUpdateExportSettings({ pageSize })}
+          settings={pageSize}
+          onSettingsChange={onPageSizeChange}
         />
         
         <PDFMixDialog

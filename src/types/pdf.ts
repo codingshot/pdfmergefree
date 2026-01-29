@@ -14,3 +14,15 @@ export interface PageSelection {
   selected: boolean;
   thumbnail?: string;
 }
+
+export type ViewMode = 'grid' | 'list';
+
+export type DownloadFormat = 'pdf' | 'images' | 'zip';
+
+export interface DocumentGroup {
+  pdfId: string;
+  pdfName: string;
+  pages: PageSelection[];
+  allSelected: boolean;
+  collapsed: boolean;
+}

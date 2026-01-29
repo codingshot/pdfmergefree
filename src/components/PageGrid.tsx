@@ -12,17 +12,21 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   rectSortingStrategy,
+  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { PageCard } from './PageCard';
-import type { PageSelection } from '@/types/pdf';
+import { PageListItem } from './PageListItem';
+import type { PageSelection, ViewMode } from '@/types/pdf';
 
 interface PageGridProps {
   pages: PageSelection[];
+  viewMode: ViewMode;
   onReorder: (pages: PageSelection[]) => void;
   onToggle: (id: string) => void;
+  onViewDetails: (page: PageSelection) => void;
 }
 
-export function PageGrid({ pages, onReorder, onToggle }: PageGridProps) {
+export function PageGrid({ pages, viewMode, onReorder, onToggle, onViewDetails }: PageGridProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -50,12 +54,33 @@ export function PageGrid({ pages, onReorder, onToggle }: PageGridProps) {
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext items={pages.map((p) => p.id)} strategy={rectSortingStrategy}>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {pages.map((page) => (
-            <PageCard key={page.id} page={page} onToggle={onToggle} />
-          ))}
-        </div>
+      <SortableContext 
+        items={pages.map((p) => p.id)} 
+        strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
+      >
+        {viewMode === 'grid' ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+            {pages.map((page) => (
+              <PageCard 
+                key={page.id} 
+                page={page} 
+                onToggle={onToggle} 
+                onViewDetails={onViewDetails}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {pages.map((page) => (
+              <PageListItem 
+                key={page.id} 
+                page={page} 
+                onToggle={onToggle}
+                onViewDetails={onViewDetails}
+              />
+            ))}
+          </div>
+        )}
       </SortableContext>
     </DndContext>
   );

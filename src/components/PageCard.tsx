@@ -1,14 +1,15 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Check, GripVertical } from 'lucide-react';
+import { Check, GripVertical, Eye } from 'lucide-react';
 import type { PageSelection } from '@/types/pdf';
 
 interface PageCardProps {
   page: PageSelection;
   onToggle: (id: string) => void;
+  onViewDetails: (page: PageSelection) => void;
 }
 
-export function PageCard({ page, onToggle }: PageCardProps) {
+export function PageCard({ page, onToggle, onViewDetails }: PageCardProps) {
   const {
     attributes,
     listeners,
@@ -30,6 +31,7 @@ export function PageCard({ page, onToggle }: PageCardProps) {
       className={`page-card group ${page.selected ? 'page-card-selected' : 'opacity-50'} ${
         isDragging ? 'dragging' : ''
       }`}
+      onDoubleClick={() => onViewDetails(page)}
     >
       <div className="relative">
         {/* Thumbnail */}
@@ -54,6 +56,15 @@ export function PageCard({ page, onToggle }: PageCardProps) {
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         </button>
         
+        {/* View details button */}
+        <button
+          onClick={() => onViewDetails(page)}
+          className="absolute bottom-2 left-2 p-1.5 rounded-lg bg-card/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+          aria-label="View page details"
+        >
+          <Eye className="w-4 h-4 text-muted-foreground" />
+        </button>
+        
         {/* Selection checkbox */}
         <button
           onClick={() => onToggle(page.id)}
@@ -68,8 +79,8 @@ export function PageCard({ page, onToggle }: PageCardProps) {
       </div>
       
       {/* Page info */}
-      <div className="p-3">
-        <p className="text-sm font-medium text-foreground truncate">
+      <div className="p-2 sm:p-3">
+        <p className="text-xs sm:text-sm font-medium text-foreground truncate">
           Page {page.pageNumber}
         </p>
         <p className="text-xs text-muted-foreground truncate" title={page.pdfName}>

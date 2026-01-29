@@ -1,73 +1,100 @@
-# Welcome to your Lovable project
+# PDF Merger
 
-## Project info
+A free, privacy-focused PDF merger tool that runs entirely in your browser. Combine multiple PDFs, select individual pages, reorder them, and download your merged document.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## ✨ Features
 
-## How can I edit this code?
+### Core Functionality
+- **Merge PDFs** - Combine multiple PDF files into a single document
+- **Page Selection** - Choose which pages to include in the final PDF
+- **Drag & Drop Reordering** - Easily rearrange pages with intuitive drag-and-drop
+- **Page Thumbnails** - Visual preview of each page for easy identification
+- **Multiple Download Formats** - Download as merged PDF, images (ZIP), or individual pages (ZIP)
 
-There are several ways of editing your application.
+### Views & Organization
+- **Grid View** - Visual grid layout for easy page browsing
+- **List View** - Compact list view optimized for reordering
+- **Document Grouping** - Group pages by source document for bulk operations
+- **Collapse/Expand Groups** - Manage large documents by collapsing groups
 
-**Use Lovable**
+### Page Details
+- **Page Detail Modal** - Double-click any page to view in larger size
+- **Zoom Controls** - Zoom in/out on page details
+- **Navigation** - Navigate between pages in the detail view
+- **Selection Toggle** - Select/deselect pages from the detail view
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Mobile Responsive
+- Fully responsive design for all screen sizes
+- Touch-friendly controls
+- Optimized layouts for mobile devices
 
-Changes made via Lovable will be committed automatically to this repo.
+### Privacy First
+- **100% Browser-Based** - All processing happens locally
+- **No Server Upload** - Your files never leave your device
+- **No Data Collection** - We don't track or store any information
 
-**Use your preferred IDE**
+## 🛠️ Technology Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool
+- **Tailwind CSS** - Styling
+- **shadcn/ui** - UI components
+- **pdf-lib** - PDF manipulation
+- **pdfjs-dist** - PDF rendering
+- **@dnd-kit** - Drag and drop
+- **JSZip** - ZIP file creation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## 🚀 Getting Started
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Navigate to project directory
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 📋 To-Do / Future Ideas
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### High Priority
+- [ ] Rotate individual pages (90°, 180°, 270°)
+- [ ] Split PDF feature (extract pages as separate files)
+- [ ] PDF password/encryption support
+- [ ] Page range selection (e.g., "1-5, 8, 10-12")
 
-**Use GitHub Codespaces**
+### Medium Priority
+- [ ] Add text annotations to pages
+- [ ] Compress PDF (reduce file size)
+- [ ] OCR support for scanned PDFs
+- [ ] PDF form filling
+- [ ] Watermark support
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Low Priority / Nice to Have
+- [ ] Cloud storage integration (Google Drive, Dropbox)
+- [ ] PDF comparison tool
+- [ ] Batch processing multiple merges
+- [ ] Custom page sizes/margins
+- [ ] PDF/A conversion for archiving
+- [ ] Digital signature support
 
-## What technologies are used for this project?
+### UX Improvements
+- [ ] Keyboard shortcuts (Ctrl+A for select all, Delete for remove, etc.)
+- [ ] Undo/Redo functionality
+- [ ] Progress indicator for large files
+- [ ] Remember last used settings
+- [ ] Dark mode support
 
-This project is built with:
+## 📄 License
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+MIT License - feel free to use this project for personal or commercial purposes.
 
-## How can I deploy this project?
+## 🤝 Contributing
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Contributions are welcome! Please feel free to submit a Pull Request.

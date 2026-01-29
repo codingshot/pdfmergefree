@@ -34,6 +34,9 @@ const Index = () => {
     deselectAllInGroup,
     focusedPageIndex,
     navigateFocus,
+    exportSettings,
+    updateExportSettings,
+    htmlToPDF,
   } = usePDFProcessor();
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -136,13 +139,18 @@ const Index = () => {
               onToggleGroupView={() => setShowGroupView(!showGroupView)}
               pages={pages}
               onCompress={compressPages}
+              documentGroups={documentGroups}
+              onMixPages={reorderPages}
+              exportSettings={exportSettings}
+              onUpdateExportSettings={updateExportSettings}
+              onCreateDocument={htmlToPDF}
             />
 
             {/* Hidden file input for adding more PDFs */}
             <input
               id="pdf-input-hidden"
               type="file"
-              accept=".pdf,application/pdf"
+              accept=".pdf,application/pdf,image/png,image/jpeg,image/jpg"
               multiple
               className="hidden"
               onChange={(e) => {

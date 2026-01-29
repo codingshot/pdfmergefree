@@ -4,7 +4,11 @@ import { ViewToggle } from '@/components/ViewToggle';
 import { DownloadMenu } from '@/components/DownloadMenu';
 import { CompressionDialog } from '@/components/CompressionDialog';
 import { KeyboardShortcutsHelp } from '@/components/KeyboardShortcutsHelp';
-import type { ViewMode, DownloadFormat, PageSelection } from '@/types/pdf';
+import { PasswordProtectionDialog } from '@/components/PasswordProtectionDialog';
+import { PageSizeDialog } from '@/components/PageSizeDialog';
+import { PDFMixDialog } from '@/components/PDFMixDialog';
+import { RichTextEditor } from '@/components/RichTextEditor';
+import type { ViewMode, DownloadFormat, PageSelection, DocumentGroup, PageSizeSettings, PDFExportSettings } from '@/types/pdf';
 
 interface ActionBarProps {
   totalPages: number;
@@ -21,6 +25,11 @@ interface ActionBarProps {
   onToggleGroupView: () => void;
   pages: PageSelection[];
   onCompress: (quality: number, targetSizeKB?: number, applyToAll?: boolean) => void;
+  documentGroups: DocumentGroup[];
+  onMixPages: (mixedPages: PageSelection[]) => void;
+  exportSettings: PDFExportSettings;
+  onUpdateExportSettings: (settings: Partial<PDFExportSettings>) => void;
+  onCreateDocument: (name: string, htmlContent: string) => void;
 }
 
 export function ActionBar({
@@ -38,6 +47,11 @@ export function ActionBar({
   onToggleGroupView,
   pages,
   onCompress,
+  documentGroups,
+  onMixPages,
+  exportSettings,
+  onUpdateExportSettings,
+  onCreateDocument,
 }: ActionBarProps) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-card rounded-xl border border-border shadow-sm">
@@ -50,8 +64,10 @@ export function ActionBar({
           disabled={loading}
         >
           <Plus className="w-4 h-4 sm:mr-2" />
-          <span className="hidden sm:inline">Add PDFs</span>
+          <span className="hidden sm:inline">Add Files</span>
         </Button>
+        
+        <RichTextEditor onCreateDocument={onCreateDocument} loading={loading} />
         
         <div className="hidden sm:block h-6 w-px bg-border" />
         
@@ -93,6 +109,25 @@ export function ActionBar({
           selectedCount={selectedCount}
           onCompress={onCompress}
           loading={loading}
+        />
+        
+        <PasswordProtectionDialog
+          enabled={!!exportSettings.password}
+          password={exportSettings.password || ''}
+          onPasswordChange={(password) => onUpdateExportSettings({ password: password || undefined })}
+          onEnabledChange={() => {}}
+        />
+        
+        <PageSizeDialog
+          settings={exportSettings.pageSize}
+          onSettingsChange={(pageSize) => onUpdateExportSettings({ pageSize })}
+        />
+        
+        <PDFMixDialog
+          documentGroups={documentGroups}
+          pages={pages}
+          onMix={onMixPages}
+          disabled={loading}
         />
         
         <Button

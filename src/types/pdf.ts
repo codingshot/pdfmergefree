@@ -4,6 +4,7 @@ export interface PDFFile {
   file: File;
   arrayBuffer: ArrayBuffer;
   pageCount: number;
+  isImage?: boolean; // For converted images
 }
 
 export interface PageSelection {
@@ -47,4 +48,16 @@ export interface CompressionSettings {
   enabled: boolean;
   quality: number; // 0.1 to 1.0
   targetSizeKB?: number;
+}
+
+export interface PageSizeSettings {
+  preset: 'original' | 'a4' | 'letter' | 'legal' | 'a3' | 'a5' | 'tabloid' | 'custom';
+  width: number; // in points (72 points = 1 inch)
+  height: number;
+  orientation: 'portrait' | 'landscape';
+}
+
+export interface PDFExportSettings {
+  password?: string;
+  pageSize: PageSizeSettings;
 }

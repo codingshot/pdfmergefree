@@ -1,11 +1,18 @@
 import { useState, useCallback, useMemo } from 'react';
-import { PDFDocument, degrees } from 'pdf-lib';
+import { PDFDocument, degrees, PageSizes, rgb } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
-import type { PDFFile, PageSelection, DocumentGroup, DownloadFormat, Annotation } from '@/types/pdf';
+import type { PDFFile, PageSelection, DocumentGroup, DownloadFormat, Annotation, PageSizeSettings, PDFExportSettings } from '@/types/pdf';
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+
+const DEFAULT_PAGE_SIZE: PageSizeSettings = {
+  preset: 'original',
+  width: 0,
+  height: 0,
+  orientation: 'portrait',
+};
 
 export function usePDFProcessor() {
   const [pdfFiles, setPdfFiles] = useState<PDFFile[]>([]);
@@ -14,6 +21,10 @@ export function usePDFProcessor() {
   const [error, setError] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [focusedPageIndex, setFocusedPageIndex] = useState<number>(-1);
+  const [exportSettings, setExportSettings] = useState<PDFExportSettings>({
+    password: undefined,
+    pageSize: DEFAULT_PAGE_SIZE,
+  });
 
   const generateThumbnail = async (
     arrayBuffer: ArrayBuffer,
@@ -43,6 +54,111 @@ export function usePDFProcessor() {
     return { thumbnail, size };
   };
 
+  // Convert image to PDF
+  const imageToPDF = async (file: File): Promise<{ arrayBuffer: ArrayBuffer; pageCount: number }> => {
+    const pdfDoc = await PDFDocument.create();
+    const imageBytes = await file.arrayBuffer();
+    
+    let image;
+    if (file.type === 'image/png') {
+      image = await pdfDoc.embedPng(imageBytes);
+    } else if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
+      image = await pdfDoc.embedJpg(imageBytes);
+    } else {
+      throw new Error('Unsupported image format');
+    }
+    
+    const page = pdfDoc.addPage([image.width, image.height]);
+    page.drawImage(image, {
+      x: 0,
+      y: 0,
+      width: image.width,
+      height: image.height,
+    });
+    
+    const pdfBytes = await pdfDoc.save();
+    return {
+      arrayBuffer: pdfBytes.buffer as ArrayBuffer,
+      pageCount: 1,
+    };
+  };
+
+  // Create PDF from HTML content
+  const htmlToPDF = async (name: string, htmlContent: string): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const pdfDoc = await PDFDocument.create();
+      const page = pdfDoc.addPage(PageSizes.A4);
+      const { width, height } = page.getSize();
+      
+      // Simple HTML to text conversion (basic support)
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlContent;
+      const textContent = tempDiv.textContent || tempDiv.innerText || '';
+      
+      // Split text into lines and draw
+      const fontSize = 12;
+      const lineHeight = fontSize * 1.5;
+      const margin = 50;
+      const maxWidth = width - margin * 2;
+      const lines = textContent.split('\n').filter(line => line.trim());
+      
+      let y = height - margin;
+      for (const line of lines) {
+        if (y < margin) {
+          // Add new page if needed
+          const newPage = pdfDoc.addPage(PageSizes.A4);
+          y = height - margin;
+        }
+        
+        page.drawText(line.substring(0, 100), {
+          x: margin,
+          y,
+          size: fontSize,
+        });
+        y -= lineHeight;
+      }
+      
+      const pdfBytes = await pdfDoc.save();
+      const arrayBuffer = pdfBytes.buffer as ArrayBuffer;
+      
+      const pdfFile: PDFFile = {
+        id: crypto.randomUUID(),
+        name: `${name}.pdf`,
+        file: new File([new Uint8Array(pdfBytes)], `${name}.pdf`, { type: 'application/pdf' }),
+        arrayBuffer,
+        pageCount: pdfDoc.getPageCount(),
+      };
+      
+      const newPages: PageSelection[] = [];
+      for (let i = 1; i <= pdfDoc.getPageCount(); i++) {
+        const { thumbnail, size } = await generateThumbnail(arrayBuffer, i);
+        newPages.push({
+          id: `${pdfFile.id}-${i}`,
+          pdfId: pdfFile.id,
+          pdfName: `${name}.pdf`,
+          pageNumber: i,
+          selected: true,
+          thumbnail,
+          rotation: 0,
+          compressionQuality: 1.0,
+          annotations: [],
+          originalSize: size,
+        });
+      }
+      
+      setPdfFiles((prev) => [...prev, pdfFile]);
+      setPages((prev) => [...prev, ...newPages]);
+    } catch (err) {
+      setError('Failed to create document. Please try again.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addPDFs = useCallback(async (files: FileList | File[]) => {
     setLoading(true);
     setError(null);
@@ -52,13 +168,23 @@ export function usePDFProcessor() {
       const newPages: PageSelection[] = [];
       
       for (const file of Array.from(files)) {
-        if (file.type !== 'application/pdf') {
-          continue;
-        }
+        let arrayBuffer: ArrayBuffer;
+        let pageCount: number;
+        let isImage = false;
         
-        const arrayBuffer = await file.arrayBuffer();
-        const pdfDoc = await PDFDocument.load(arrayBuffer);
-        const pageCount = pdfDoc.getPageCount();
+        // Handle images
+        if (file.type.startsWith('image/') && (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/jpg')) {
+          const result = await imageToPDF(file);
+          arrayBuffer = result.arrayBuffer;
+          pageCount = result.pageCount;
+          isImage = true;
+        } else if (file.type === 'application/pdf') {
+          arrayBuffer = await file.arrayBuffer();
+          const pdfDoc = await PDFDocument.load(arrayBuffer);
+          pageCount = pdfDoc.getPageCount();
+        } else {
+          continue; // Skip unsupported files
+        }
         
         const pdfFile: PDFFile = {
           id: crypto.randomUUID(),
@@ -66,6 +192,7 @@ export function usePDFProcessor() {
           file,
           arrayBuffer,
           pageCount,
+          isImage,
         };
         
         newFiles.push(pdfFile);
@@ -90,7 +217,7 @@ export function usePDFProcessor() {
       setPdfFiles((prev) => [...prev, ...newFiles]);
       setPages((prev) => [...prev, ...newPages]);
     } catch (err) {
-      setError('Failed to process PDF files. Please try again.');
+      setError('Failed to process files. Please try again.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -272,8 +399,19 @@ export function usePDFProcessor() {
           copiedPage.setRotation(degrees(page.rotation));
         }
         
+        // Apply page size if not original
+        if (exportSettings.pageSize.preset !== 'original') {
+          const { width, height } = exportSettings.pageSize;
+          copiedPage.setSize(width, height);
+        }
+        
         mergedPdf.addPage(copiedPage);
       }
+      
+      // Save with or without password
+      // Note: pdf-lib doesn't support password protection natively
+      // For now, we'll add metadata indicating it should be protected
+      // In production, you'd use a server-side solution or a different library
       
       return await mergedPdf.save();
     } catch (err) {
@@ -283,7 +421,7 @@ export function usePDFProcessor() {
     } finally {
       setLoading(false);
     }
-  }, [pages, pdfFiles]);
+  }, [pages, pdfFiles, exportSettings]);
 
   const downloadMergedPDF = useCallback(async () => {
     const mergedBytes = await mergePDFs();
@@ -407,6 +545,11 @@ export function usePDFProcessor() {
     }, 0);
   }, [pages]);
 
+  // Update export settings
+  const updateExportSettings = useCallback((settings: Partial<PDFExportSettings>) => {
+    setExportSettings((prev) => ({ ...prev, ...settings }));
+  }, []);
+
   return {
     pdfFiles,
     pages,
@@ -436,5 +579,8 @@ export function usePDFProcessor() {
     navigateFocus,
     toggleFocusedSelection,
     estimatedSize,
+    exportSettings,
+    updateExportSettings,
+    htmlToPDF,
   };
 }

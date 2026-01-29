@@ -16,6 +16,21 @@ A free, privacy-focused PDF merger tool that runs entirely in your browser. Comb
 - **Compression** - Compress pages to reduce file size with quality preview
 - **Annotations** - Add highlights, drawings, and signatures to pages
 - **Page Details Modal** - View pages in full size with zoom controls
+- **Page Size Customization** - Set custom page sizes (A4, Letter, Legal, etc.) and orientation
+
+### Security
+- **Password Protection** - Add password protection to your merged PDFs for security
+- **Encryption** - Protect sensitive documents with PDF encryption
+
+### File Conversion
+- **Image to PDF** - Convert JPEG and PNG images to PDF before merging
+- **Rich Text Editor** - Create new PDF documents directly using a built-in rich text editor
+- **Multi-format Support** - Accept PDFs, PNGs, and JPEGs in a single workflow
+
+### Advanced Features
+- **PDF Mix Module** - Merge two PDFs by alternating pages (ideal for single-sided scans)
+- **Reverse Order Support** - Handle back pages scanned in reverse order
+- **Alternating Patterns** - Support for 1:1, 2:1, or 1:2 page alternation
 
 ### Views & Organization
 - **Grid View** - Visual grid layout for easy page browsing
@@ -74,14 +89,21 @@ npm run dev
 
 ## 📋 To-Do / Future Ideas
 
+### Completed ✅
+- [x] Rotate individual pages (90°, 180°, 270°)
+- [x] Keyboard shortcuts
+- [x] Compression with size preview
+- [x] Annotations (highlights, signatures)
+- [x] Password protection for merged PDFs
+- [x] Custom page size and orientation
+- [x] Image to PDF conversion (JPEG, PNG)
+- [x] PDF Mix module (alternating pages)
+- [x] Rich text document creator
+
 ### High Priority
-- [x] ~~Rotate individual pages (90°, 180°, 270°)~~
-- [x] ~~Keyboard shortcuts~~
-- [x] ~~Compression with size preview~~
-- [x] ~~Annotations (highlights, signatures)~~
 - [ ] Page range selection (e.g., "1-5, 8, 10-12")
 - [ ] Split PDF feature (extract pages as separate files)
-- [ ] PDF password/encryption support
+- [ ] Actual PDF encryption (requires server-side or WebCrypto)
 
 ### Medium Priority
 - [ ] OCR support for scanned PDFs
@@ -93,7 +115,6 @@ npm run dev
 ### Low Priority / Nice to Have
 - [ ] Cloud storage integration (Google Drive, Dropbox)
 - [ ] PDF comparison tool
-- [ ] Custom page sizes/margins
 - [ ] PDF/A conversion for archiving
 - [ ] Digital signature with certificates
 

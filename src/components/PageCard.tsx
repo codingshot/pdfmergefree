@@ -5,12 +5,14 @@ import type { PageSelection } from '@/types/pdf';
 
 interface PageCardProps {
   page: PageSelection;
+  index: number;
+  totalPages: number;
   onToggle: (id: string) => void;
   onViewDetails: (page: PageSelection) => void;
   isFocused?: boolean;
 }
 
-export function PageCard({ page, onToggle, onViewDetails, isFocused = false }: PageCardProps) {
+export function PageCard({ page, index, totalPages, onToggle, onViewDetails, isFocused = false }: PageCardProps) {
   const {
     attributes,
     listeners,
@@ -98,9 +100,14 @@ export function PageCard({ page, onToggle, onViewDetails, isFocused = false }: P
       
       {/* Page info */}
       <div className="p-2 sm:p-3">
-        <p className="text-xs sm:text-sm font-medium text-foreground truncate">
-          Page {page.pageNumber}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs sm:text-sm font-medium text-foreground truncate">
+            Page {page.pageNumber}
+          </p>
+          <span className="text-xs text-muted-foreground">
+            {index + 1}/{totalPages}
+          </span>
+        </div>
         <p className="text-xs text-muted-foreground truncate" title={page.pdfName}>
           {page.pdfName}
         </p>

@@ -19,6 +19,7 @@ const Index = () => {
     togglePageSelection,
     selectAll,
     deselectAll,
+    selectByIndices,
     removeSelectedPages,
     rotatePage,
     rotateSelectedPages,
@@ -27,6 +28,7 @@ const Index = () => {
     reorderPages,
     removeAllPDFs,
     download,
+    splitPDF,
     selectedCount,
     documentGroups,
     toggleGroupCollapse,
@@ -133,8 +135,10 @@ const Index = () => {
               onAddMore={() => document.getElementById('pdf-input-hidden')?.click()}
               onSelectAll={selectAll}
               onDeselectAll={deselectAll}
+              onSelectByIndices={selectByIndices}
               onClear={removeAllPDFs}
               onDownload={download}
+              onSplit={splitPDF}
               showGroupView={showGroupView}
               onToggleGroupView={() => setShowGroupView(!showGroupView)}
               pages={pages}

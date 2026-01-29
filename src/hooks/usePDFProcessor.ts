@@ -528,6 +528,95 @@ export function usePDFProcessor() {
     }
   }, [downloadMergedPDF, downloadAsImages, downloadAsZip]);
 
+  // Split PDF - download selected pages as separate files
+  const splitPDF = useCallback(async (mode: 'individual' | 'chunks', chunkSize: number = 1) => {
+    const selectedPages = pages.filter((p) => p.selected);
+    
+    if (selectedPages.length === 0) {
+      setError('Please select at least one page to split.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const zip = new JSZip();
+      
+      if (mode === 'individual') {
+        // One page per file
+        for (let i = 0; i < selectedPages.length; i++) {
+          const page = selectedPages[i];
+          const pdfFile = pdfFiles.find((f) => f.id === page.pdfId);
+          if (!pdfFile) continue;
+
+          const singlePagePdf = await PDFDocument.create();
+          const sourcePdf = await PDFDocument.load(pdfFile.arrayBuffer);
+          const [copiedPage] = await singlePagePdf.copyPages(sourcePdf, [page.pageNumber - 1]);
+          
+          if (page.rotation !== 0) {
+            copiedPage.setRotation(degrees(page.rotation));
+          }
+          
+          singlePagePdf.addPage(copiedPage);
+          const pdfBytes = await singlePagePdf.save();
+          zip.file(`page-${i + 1}.pdf`, pdfBytes);
+        }
+      } else {
+        // Split into chunks
+        const chunks: PageSelection[][] = [];
+        for (let i = 0; i < selectedPages.length; i += chunkSize) {
+          chunks.push(selectedPages.slice(i, i + chunkSize));
+        }
+        
+        for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+          const chunk = chunks[chunkIndex];
+          const chunkPdf = await PDFDocument.create();
+          
+          for (const page of chunk) {
+            const pdfFile = pdfFiles.find((f) => f.id === page.pdfId);
+            if (!pdfFile) continue;
+            
+            const sourcePdf = await PDFDocument.load(pdfFile.arrayBuffer);
+            const [copiedPage] = await chunkPdf.copyPages(sourcePdf, [page.pageNumber - 1]);
+            
+            if (page.rotation !== 0) {
+              copiedPage.setRotation(degrees(page.rotation));
+            }
+            
+            chunkPdf.addPage(copiedPage);
+          }
+          
+          const pdfBytes = await chunkPdf.save();
+          zip.file(`document-${chunkIndex + 1}.pdf`, pdfBytes);
+        }
+      }
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(content);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'split-pages.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError('Failed to split PDF. Please try again.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [pages, pdfFiles]);
+
+  // Select pages by indices
+  const selectByIndices = useCallback((indices: number[]) => {
+    setPages((prev) =>
+      prev.map((page, index) => ({
+        ...page,
+        selected: indices.includes(index),
+      }))
+    );
+  }, []);
+
   // Calculate total estimated size
   const estimatedSize = useMemo(() => {
     const selectedPages = pages.filter((p) => p.selected);
@@ -551,6 +640,7 @@ export function usePDFProcessor() {
     togglePageSelection,
     selectAll,
     deselectAll,
+    selectByIndices,
     removeSelectedPages,
     rotatePage,
     rotateSelectedPages,
@@ -561,6 +651,7 @@ export function usePDFProcessor() {
     removeAllPDFs,
     downloadMergedPDF,
     download,
+    splitPDF,
     selectedCount: pages.filter((p) => p.selected).length,
     documentGroups,
     toggleGroupCollapse,

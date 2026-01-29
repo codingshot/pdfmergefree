@@ -64,7 +64,9 @@ export function PageGrid({ pages, viewMode, onReorder, onToggle, onViewDetails, 
             {pages.map((page, index) => (
               <PageCard 
                 key={page.id} 
-                page={page} 
+                page={page}
+                index={index}
+                totalPages={pages.length}
                 onToggle={onToggle} 
                 onViewDetails={onViewDetails}
                 isFocused={index === focusedIndex}

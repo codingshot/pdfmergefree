@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { FileStack } from 'lucide-react';
+import { FileStack, Github } from 'lucide-react';
 import { PDFDropZone } from '@/components/PDFDropZone';
 import { PageGrid } from '@/components/PageGrid';
 import { ActionBar } from '@/components/ActionBar';
@@ -9,6 +9,13 @@ import { AnnotationEditor } from '@/components/AnnotationEditor';
 import { usePDFProcessor } from '@/hooks/usePDFProcessor';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import type { PageSelection, ViewMode, Annotation } from '@/types/pdf';
+
+// X (Twitter) icon component
+const XIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
 
 const Index = () => {
   const {
@@ -200,8 +207,29 @@ const Index = () => {
         )}
 
         {/* Footer */}
-        <footer className="mt-10 sm:mt-12 text-center text-xs sm:text-sm text-muted-foreground">
+        <footer className="mt-10 sm:mt-12 text-center text-xs sm:text-sm text-muted-foreground space-y-3">
           <p>All processing happens locally in your browser. Your files never leave your device.</p>
+          <div className="flex items-center justify-center gap-4">
+            <a
+              href="https://github.com/codingshot/pdfmergefree/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+            >
+              <Github className="w-4 h-4" />
+              <span>GitHub</span>
+            </a>
+            <a
+              href="https://x.com/plugrel"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+            >
+              <XIcon className="w-4 h-4" />
+              <span>@plugrel</span>
+            </a>
+          </div>
+          <p className="text-xs">pdfmerge.free</p>
         </footer>
       </div>
 

@@ -56,7 +56,7 @@ export function PDFDropZone({ onFilesAdded, loading }: PDFDropZoneProps) {
       <input
         id="pdf-input"
         type="file"
-        accept=".pdf,application/pdf"
+        accept=".pdf,application/pdf,image/png,image/jpeg,image/jpg"
         multiple
         className="hidden"
         onChange={handleFileSelect}
@@ -74,7 +74,7 @@ export function PDFDropZone({ onFilesAdded, loading }: PDFDropZoneProps) {
         
         <div>
           <p className="text-lg font-semibold text-foreground">
-            {loading ? 'Processing PDFs...' : 'Drop PDF files here'}
+            {loading ? 'Processing files...' : 'Drop PDF or image files here'}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
             or click to browse
@@ -83,7 +83,7 @@ export function PDFDropZone({ onFilesAdded, loading }: PDFDropZoneProps) {
         
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <FileText className="w-4 h-4" />
-          <span>Supports multiple PDF files</span>
+          <span>Supports PDF, PNG, and JPEG files</span>
         </div>
       </div>
     </div>

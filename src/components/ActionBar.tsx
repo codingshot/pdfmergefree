@@ -1,41 +1,67 @@
-import { Download, Trash2, Plus, CheckSquare, Square } from 'lucide-react';
+import { Trash2, Plus, CheckSquare, Square, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ViewToggle } from '@/components/ViewToggle';
+import { DownloadMenu } from '@/components/DownloadMenu';
+import type { ViewMode, DownloadFormat } from '@/types/pdf';
 
 interface ActionBarProps {
   totalPages: number;
   selectedCount: number;
   loading: boolean;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
   onAddMore: () => void;
   onSelectAll: () => void;
   onDeselectAll: () => void;
   onClear: () => void;
-  onDownload: () => void;
+  onDownload: (format: DownloadFormat) => void;
+  showGroupView: boolean;
+  onToggleGroupView: () => void;
 }
 
 export function ActionBar({
   totalPages,
   selectedCount,
   loading,
+  viewMode,
+  onViewModeChange,
   onAddMore,
   onSelectAll,
   onDeselectAll,
   onClear,
   onDownload,
+  showGroupView,
+  onToggleGroupView,
 }: ActionBarProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-card rounded-xl border border-border shadow-sm">
-      <div className="flex items-center gap-3">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-card rounded-xl border border-border shadow-sm">
+      {/* Left side actions */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <Button
           variant="outline"
           size="sm"
           onClick={onAddMore}
           disabled={loading}
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Add PDFs
+          <Plus className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Add PDFs</span>
         </Button>
         
-        <div className="h-6 w-px bg-border" />
+        <div className="hidden sm:block h-6 w-px bg-border" />
+        
+        <ViewToggle viewMode={viewMode} onViewModeChange={onViewModeChange} />
+        
+        <Button
+          variant={showGroupView ? 'secondary' : 'ghost'}
+          size="sm"
+          onClick={onToggleGroupView}
+          title="Group by document"
+        >
+          <FolderOpen className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Group</span>
+        </Button>
+        
+        <div className="hidden sm:block h-6 w-px bg-border" />
         
         <Button
           variant="ghost"
@@ -45,13 +71,13 @@ export function ActionBar({
         >
           {selectedCount === totalPages ? (
             <>
-              <Square className="w-4 h-4 mr-2" />
-              Deselect All
+              <Square className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Deselect All</span>
             </>
           ) : (
             <>
-              <CheckSquare className="w-4 h-4 mr-2" />
-              Select All
+              <CheckSquare className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Select All</span>
             </>
           )}
         </Button>
@@ -63,24 +89,23 @@ export function ActionBar({
           disabled={loading}
           className="text-destructive hover:text-destructive hover:bg-destructive/10"
         >
-          <Trash2 className="w-4 h-4 mr-2" />
-          Clear All
+          <Trash2 className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Clear</span>
         </Button>
       </div>
       
-      <div className="flex items-center gap-4">
+      {/* Right side - selection count & download */}
+      <div className="flex items-center justify-between sm:justify-end gap-4">
         <span className="text-sm text-muted-foreground">
-          {selectedCount} of {totalPages} pages selected
+          {selectedCount}/{totalPages} selected
         </span>
         
-        <Button
-          onClick={onDownload}
-          disabled={loading || selectedCount === 0}
-          className="shadow-lg shadow-primary/25"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Download PDF
-        </Button>
+        <DownloadMenu
+          disabled={selectedCount === 0}
+          loading={loading}
+          selectedCount={selectedCount}
+          onDownload={onDownload}
+        />
       </div>
     </div>
   );

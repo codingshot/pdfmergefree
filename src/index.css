@@ -48,6 +48,36 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 349 89% 60%;
   }
+
+  .dark {
+    --background: 222 47% 8%;
+    --foreground: 210 20% 98%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 349 89% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 47% 15%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 222 47% 18%;
+    --muted-foreground: 215 16% 60%;
+
+    --accent: 349 89% 20%;
+    --accent-foreground: 349 89% 80%;
+
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 47% 20%;
+    --input: 222 47% 20%;
+    --ring: 349 89% 60%;
+  }
 }
 
 @layer base {
@@ -63,7 +93,7 @@
 
 @layer components {
   .drop-zone {
-    @apply border-2 border-dashed border-muted-foreground/30 rounded-2xl p-12 transition-all duration-300 ease-out;
+    @apply border-2 border-dashed border-muted-foreground/30 rounded-2xl p-8 sm:p-12 transition-all duration-300 ease-out;
   }
 
   .drop-zone:hover,
@@ -99,5 +129,13 @@
       radial-gradient(at 80% 0%, hsl(210 20% 98%) 0px, transparent 50%),
       radial-gradient(at 0% 50%, hsl(349 89% 97%) 0px, transparent 50%),
       hsl(210 20% 98%);
+  }
+
+  .dark .gradient-mesh {
+    background: 
+      radial-gradient(at 40% 20%, hsl(349 89% 15%) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, hsl(222 47% 12%) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, hsl(349 89% 10%) 0px, transparent 50%),
+      hsl(222 47% 8%);
   }
 }

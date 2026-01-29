@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { PDFDocument, degrees, PageSizes, rgb } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
-import type { PDFFile, PageSelection, DocumentGroup, DownloadFormat, Annotation, PageSizeSettings, PDFExportSettings } from '@/types/pdf';
+import type { PDFFile, PageSelection, DocumentGroup, DownloadFormat, Annotation, PageSizeSettings } from '@/types/pdf';
 
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
@@ -21,10 +21,7 @@ export function usePDFProcessor() {
   const [error, setError] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [focusedPageIndex, setFocusedPageIndex] = useState<number>(-1);
-  const [exportSettings, setExportSettings] = useState<PDFExportSettings>({
-    password: undefined,
-    pageSize: DEFAULT_PAGE_SIZE,
-  });
+  const [pageSize, setPageSize] = useState<PageSizeSettings>(DEFAULT_PAGE_SIZE);
 
   const generateThumbnail = async (
     arrayBuffer: ArrayBuffer,
@@ -400,18 +397,13 @@ export function usePDFProcessor() {
         }
         
         // Apply page size if not original
-        if (exportSettings.pageSize.preset !== 'original') {
-          const { width, height } = exportSettings.pageSize;
+        if (pageSize.preset !== 'original') {
+          const { width, height } = pageSize;
           copiedPage.setSize(width, height);
         }
         
         mergedPdf.addPage(copiedPage);
       }
-      
-      // Save with or without password
-      // Note: pdf-lib doesn't support password protection natively
-      // For now, we'll add metadata indicating it should be protected
-      // In production, you'd use a server-side solution or a different library
       
       return await mergedPdf.save();
     } catch (err) {
@@ -421,7 +413,7 @@ export function usePDFProcessor() {
     } finally {
       setLoading(false);
     }
-  }, [pages, pdfFiles, exportSettings]);
+  }, [pages, pdfFiles, pageSize]);
 
   const downloadMergedPDF = useCallback(async () => {
     const mergedBytes = await mergePDFs();
@@ -545,9 +537,9 @@ export function usePDFProcessor() {
     }, 0);
   }, [pages]);
 
-  // Update export settings
-  const updateExportSettings = useCallback((settings: Partial<PDFExportSettings>) => {
-    setExportSettings((prev) => ({ ...prev, ...settings }));
+  // Update page size
+  const updatePageSize = useCallback((settings: PageSizeSettings) => {
+    setPageSize(settings);
   }, []);
 
   return {
@@ -579,8 +571,8 @@ export function usePDFProcessor() {
     navigateFocus,
     toggleFocusedSelection,
     estimatedSize,
-    exportSettings,
-    updateExportSettings,
+    pageSize,
+    updatePageSize,
     htmlToPDF,
   };
 }

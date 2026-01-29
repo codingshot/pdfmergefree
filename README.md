@@ -19,8 +19,9 @@ A free, privacy-focused PDF merger tool that runs entirely in your browser. Comb
 - **Page Size Customization** - Set custom page sizes (A4, Letter, Legal, etc.) and orientation
 
 ### Security
-- **Password Protection** - Add password protection to your merged PDFs for security
-- **Encryption** - Protect sensitive documents with PDF encryption
+- **Privacy First** - All processing happens in your browser
+- **No Uploads** - Files never leave your device
+- **No Data Collection** - We don't track or store any information
 
 ### File Conversion
 - **Image to PDF** - Convert JPEG and PNG images to PDF before merging
@@ -94,7 +95,6 @@ npm run dev
 - [x] Keyboard shortcuts
 - [x] Compression with size preview
 - [x] Annotations (highlights, signatures)
-- [x] Password protection for merged PDFs
 - [x] Custom page size and orientation
 - [x] Image to PDF conversion (JPEG, PNG)
 - [x] PDF Mix module (alternating pages)

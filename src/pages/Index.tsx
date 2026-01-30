@@ -46,6 +46,7 @@ const Index = () => {
     pageSize,
     updatePageSize,
     htmlToPDF,
+    progress,
   } = usePDFProcessor();
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -155,6 +156,7 @@ const Index = () => {
               pageSize={pageSize}
               onPageSizeChange={updatePageSize}
               onCreateDocument={htmlToPDF}
+              progress={progress}
             />
 
             {/* Hidden file input for adding more PDFs */}

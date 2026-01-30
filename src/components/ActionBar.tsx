@@ -24,7 +24,7 @@ interface ActionBarProps {
   onSelectByIndices: (indices: number[]) => void;
   onClear: () => void;
   onDownload: (format: DownloadFormat) => void;
-  onSplit: (mode: 'individual' | 'chunks', chunkSize?: number) => void;
+  onSplit: (mode: 'individual' | 'chunks', chunkSize?: number, baseFileName?: string) => void;
   showGroupView: boolean;
   onToggleGroupView: () => void;
   pages: PageSelection[];
@@ -34,6 +34,7 @@ interface ActionBarProps {
   pageSize: PageSizeSettings;
   onPageSizeChange: (settings: PageSizeSettings) => void;
   onCreateDocument: (name: string, htmlContent: string) => void;
+  progress?: { current: number; total: number } | null;
 }
 
 export function ActionBar({
@@ -58,11 +59,25 @@ export function ActionBar({
   pageSize,
   onPageSizeChange,
   onCreateDocument,
+  progress,
 }: ActionBarProps) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-card rounded-xl border border-border shadow-sm">
-      {/* Left side actions */}
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+    <div className="flex flex-col gap-3 p-3 sm:p-4 bg-card rounded-xl border border-border shadow-sm">
+      {/* Progress indicator */}
+      {progress && (
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary transition-all duration-300" 
+              style={{ width: `${(progress.current / progress.total) * 100}%` }}
+            />
+          </div>
+          <span>{progress.current}/{progress.total}</span>
+        </div>
+      )}
+      
+      {/* Main toolbar - wraps on mobile */}
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -100,7 +115,7 @@ export function ActionBar({
           {selectedCount === totalPages ? (
             <>
               <Square className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Deselect All</span>
+              <span className="hidden sm:inline">Deselect</span>
             </>
           ) : (
             <>
@@ -158,9 +173,9 @@ export function ActionBar({
         <KeyboardShortcutsHelp />
       </div>
       
-      {/* Right side - selection count & download */}
-      <div className="flex items-center justify-between sm:justify-end gap-4">
-        <span className="text-sm text-muted-foreground">
+      {/* Bottom row - selection count & download */}
+      <div className="flex items-center justify-between border-t border-border pt-3 mt-1">
+        <span className="text-xs sm:text-sm text-muted-foreground">
           {selectedCount}/{totalPages} selected
         </span>
         

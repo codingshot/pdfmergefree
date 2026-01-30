@@ -16,7 +16,7 @@ import {
 
 interface SplitPDFDialogProps {
   selectedCount: number;
-  onSplit: (mode: 'individual' | 'chunks', chunkSize?: number) => void;
+  onSplit: (mode: 'individual' | 'chunks', chunkSize?: number, baseFileName?: string) => void;
   disabled: boolean;
 }
 
@@ -24,14 +24,15 @@ export function SplitPDFDialog({ selectedCount, onSplit, disabled }: SplitPDFDia
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'individual' | 'chunks'>('individual');
   const [chunkSize, setChunkSize] = useState('2');
+  const [baseFileName, setBaseFileName] = useState('page');
 
   const handleSplit = () => {
     if (mode === 'individual') {
-      onSplit('individual');
+      onSplit('individual', undefined, baseFileName);
     } else {
       const size = parseInt(chunkSize, 10);
       if (size > 0) {
-        onSplit('chunks', size);
+        onSplit('chunks', size, baseFileName);
       }
     }
     setOpen(false);
@@ -50,7 +51,7 @@ export function SplitPDFDialog({ selectedCount, onSplit, disabled }: SplitPDFDia
           <span className="hidden sm:inline">Split</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Scissors className="w-5 h-5" />
@@ -62,10 +63,25 @@ export function SplitPDFDialog({ selectedCount, onSplit, disabled }: SplitPDFDia
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Base filename */}
+          <div className="space-y-2">
+            <Label htmlFor="base-filename">File name prefix</Label>
+            <Input
+              id="base-filename"
+              placeholder="e.g., document, page"
+              value={baseFileName}
+              onChange={(e) => setBaseFileName(e.target.value)}
+              className="w-full"
+            />
+            <p className="text-xs text-muted-foreground">
+              Files will be named: {baseFileName}-1.pdf, {baseFileName}-2.pdf, etc.
+            </p>
+          </div>
+
           <RadioGroup value={mode} onValueChange={(v) => setMode(v as 'individual' | 'chunks')}>
-            <div className="flex items-start space-x-3">
-              <RadioGroupItem value="individual" id="individual" />
-              <div className="space-y-1">
+            <div className="flex items-start space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+              <RadioGroupItem value="individual" id="individual" className="mt-1" />
+              <div className="space-y-1 flex-1">
                 <Label htmlFor="individual" className="font-medium cursor-pointer">
                   One page per file
                 </Label>
@@ -74,52 +90,51 @@ export function SplitPDFDialog({ selectedCount, onSplit, disabled }: SplitPDFDia
                 </p>
               </div>
             </div>
-            <div className="flex items-start space-x-3">
-              <RadioGroupItem value="chunks" id="chunks" />
-              <div className="space-y-1">
+            <div className="flex items-start space-x-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+              <RadioGroupItem value="chunks" id="chunks" className="mt-1" />
+              <div className="space-y-1 flex-1">
                 <Label htmlFor="chunks" className="font-medium cursor-pointer">
                   Split into chunks
                 </Label>
                 <p className="text-xs text-muted-foreground">
                   Group pages into files of specified size
                 </p>
+                {mode === 'chunks' && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Input
+                      id="chunk-size"
+                      type="number"
+                      min="1"
+                      max={selectedCount}
+                      value={chunkSize}
+                      onChange={(e) => setChunkSize(e.target.value)}
+                      className="w-20"
+                    />
+                    <span className="text-xs text-muted-foreground">pages per file</span>
+                  </div>
+                )}
               </div>
             </div>
           </RadioGroup>
 
-          {mode === 'chunks' && (
-            <div className="space-y-2 pl-6">
-              <Label htmlFor="chunk-size">Pages per file</Label>
-              <Input
-                id="chunk-size"
-                type="number"
-                min="1"
-                max={selectedCount}
-                value={chunkSize}
-                onChange={(e) => setChunkSize(e.target.value)}
-                className="w-24"
-              />
-            </div>
-          )}
-
           <div className="p-3 bg-muted/50 rounded-lg text-sm">
             <p className="text-muted-foreground">
               {mode === 'individual' ? (
-                <>This will create <strong>{selectedCount}</strong> PDF file{selectedCount !== 1 ? 's' : ''}.</>
+                <>This will create <strong>{selectedCount}</strong> PDF file{selectedCount !== 1 ? 's' : ''} in a ZIP archive.</>
               ) : (
-                <>This will create <strong>{Math.ceil(selectedCount / parseInt(chunkSize || '1', 10))}</strong> PDF file{Math.ceil(selectedCount / parseInt(chunkSize || '1', 10)) !== 1 ? 's' : ''}.</>
+                <>This will create <strong>{Math.ceil(selectedCount / parseInt(chunkSize || '1', 10))}</strong> PDF file{Math.ceil(selectedCount / parseInt(chunkSize || '1', 10)) !== 1 ? 's' : ''} in a ZIP archive.</>
               )}
             </p>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={handleSplit}>
+          <Button onClick={handleSplit} className="w-full sm:w-auto">
             <Download className="w-4 h-4 mr-2" />
-            Download Split PDFs
+            Download ZIP
           </Button>
         </DialogFooter>
       </DialogContent>

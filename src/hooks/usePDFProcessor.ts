@@ -14,6 +14,9 @@ const DEFAULT_PAGE_SIZE: PageSizeSettings = {
   orientation: 'portrait',
 };
 
+// Large file threshold (10MB)
+const LARGE_FILE_THRESHOLD = 10 * 1024 * 1024;
+
 export function usePDFProcessor() {
   const [pdfFiles, setPdfFiles] = useState<PDFFile[]>([]);
   const [pages, setPages] = useState<PageSelection[]>([]);
@@ -22,16 +25,19 @@ export function usePDFProcessor() {
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [focusedPageIndex, setFocusedPageIndex] = useState<number>(-1);
   const [pageSize, setPageSize] = useState<PageSizeSettings>(DEFAULT_PAGE_SIZE);
+  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
 
   const generateThumbnail = async (
     arrayBuffer: ArrayBuffer,
-    pageNum: number
+    pageNum: number,
+    isLargeFile: boolean = false
   ): Promise<{ thumbnail: string; size: number }> => {
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer.slice(0) });
     const pdf = await loadingTask.promise;
     const page = await pdf.getPage(pageNum);
     
-    const scale = 0.5;
+    // Use smaller scale for large files to reduce memory usage
+    const scale = isLargeFile ? 0.3 : 0.5;
     const viewport = page.getViewport({ scale });
     
     const canvas = document.createElement('canvas');
@@ -44,9 +50,15 @@ export function usePDFProcessor() {
       viewport: viewport,
     }).promise;
     
-    const thumbnail = canvas.toDataURL('image/jpeg', 0.8);
+    // Use lower quality for large files
+    const quality = isLargeFile ? 0.6 : 0.8;
+    const thumbnail = canvas.toDataURL('image/jpeg', quality);
     // Estimate size based on canvas dimensions
     const size = Math.round((canvas.width * canvas.height * 3) / 10); // rough estimate
+    
+    // Clean up
+    canvas.width = 0;
+    canvas.height = 0;
     
     return { thumbnail, size };
   };
@@ -159,15 +171,19 @@ export function usePDFProcessor() {
   const addPDFs = useCallback(async (files: FileList | File[]) => {
     setLoading(true);
     setError(null);
+    setProgress(null);
     
     try {
       const newFiles: PDFFile[] = [];
       const newPages: PageSelection[] = [];
+      const fileArray = Array.from(files);
       
-      for (const file of Array.from(files)) {
+      for (let fileIndex = 0; fileIndex < fileArray.length; fileIndex++) {
+        const file = fileArray[fileIndex];
         let arrayBuffer: ArrayBuffer;
         let pageCount: number;
         let isImage = false;
+        const isLargeFile = file.size > LARGE_FILE_THRESHOLD;
         
         // Handle images
         if (file.type.startsWith('image/') && (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'image/jpg')) {
@@ -177,7 +193,7 @@ export function usePDFProcessor() {
           isImage = true;
         } else if (file.type === 'application/pdf') {
           arrayBuffer = await file.arrayBuffer();
-          const pdfDoc = await PDFDocument.load(arrayBuffer);
+          const pdfDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
           pageCount = pdfDoc.getPageCount();
         } else {
           continue; // Skip unsupported files
@@ -194,20 +210,36 @@ export function usePDFProcessor() {
         
         newFiles.push(pdfFile);
         
-        for (let i = 1; i <= pageCount; i++) {
-          const { thumbnail, size } = await generateThumbnail(arrayBuffer, i);
-          newPages.push({
-            id: `${pdfFile.id}-${i}`,
-            pdfId: pdfFile.id,
-            pdfName: file.name,
-            pageNumber: i,
-            selected: true,
-            thumbnail,
-            rotation: 0,
-            compressionQuality: 1.0,
-            annotations: [],
-            originalSize: size,
+        // Process pages in batches for large files
+        const batchSize = isLargeFile ? 5 : 10;
+        for (let i = 1; i <= pageCount; i += batchSize) {
+          const batch = [];
+          for (let j = i; j < Math.min(i + batchSize, pageCount + 1); j++) {
+            batch.push(j);
+          }
+          
+          // Process batch in parallel
+          const thumbnailPromises = batch.map(async (pageNum) => {
+            const { thumbnail, size } = await generateThumbnail(arrayBuffer, pageNum, isLargeFile);
+            return {
+              id: `${pdfFile.id}-${pageNum}`,
+              pdfId: pdfFile.id,
+              pdfName: file.name,
+              pageNumber: pageNum,
+              selected: true,
+              thumbnail,
+              rotation: 0,
+              compressionQuality: 1.0,
+              annotations: [],
+              originalSize: size,
+            };
           });
+          
+          const batchResults = await Promise.all(thumbnailPromises);
+          newPages.push(...batchResults);
+          
+          // Update progress
+          setProgress({ current: newPages.length, total: pageCount * fileArray.length });
         }
       }
       
@@ -529,7 +561,7 @@ export function usePDFProcessor() {
   }, [downloadMergedPDF, downloadAsImages, downloadAsZip]);
 
   // Split PDF - download selected pages as separate files
-  const splitPDF = useCallback(async (mode: 'individual' | 'chunks', chunkSize: number = 1) => {
+  const splitPDF = useCallback(async (mode: 'individual' | 'chunks', chunkSize: number = 1, baseFileName: string = 'page') => {
     const selectedPages = pages.filter((p) => p.selected);
     
     if (selectedPages.length === 0) {
@@ -538,8 +570,10 @@ export function usePDFProcessor() {
     }
 
     setLoading(true);
+    setProgress({ current: 0, total: selectedPages.length });
     try {
       const zip = new JSZip();
+      const sanitizedName = baseFileName.replace(/[^a-zA-Z0-9-_]/g, '_') || 'page';
       
       if (mode === 'individual') {
         // One page per file
@@ -549,7 +583,7 @@ export function usePDFProcessor() {
           if (!pdfFile) continue;
 
           const singlePagePdf = await PDFDocument.create();
-          const sourcePdf = await PDFDocument.load(pdfFile.arrayBuffer);
+          const sourcePdf = await PDFDocument.load(pdfFile.arrayBuffer, { ignoreEncryption: true });
           const [copiedPage] = await singlePagePdf.copyPages(sourcePdf, [page.pageNumber - 1]);
           
           if (page.rotation !== 0) {
@@ -558,7 +592,8 @@ export function usePDFProcessor() {
           
           singlePagePdf.addPage(copiedPage);
           const pdfBytes = await singlePagePdf.save();
-          zip.file(`page-${i + 1}.pdf`, pdfBytes);
+          zip.file(`${sanitizedName}-${i + 1}.pdf`, pdfBytes);
+          setProgress({ current: i + 1, total: selectedPages.length });
         }
       } else {
         // Split into chunks
@@ -575,7 +610,7 @@ export function usePDFProcessor() {
             const pdfFile = pdfFiles.find((f) => f.id === page.pdfId);
             if (!pdfFile) continue;
             
-            const sourcePdf = await PDFDocument.load(pdfFile.arrayBuffer);
+            const sourcePdf = await PDFDocument.load(pdfFile.arrayBuffer, { ignoreEncryption: true });
             const [copiedPage] = await chunkPdf.copyPages(sourcePdf, [page.pageNumber - 1]);
             
             if (page.rotation !== 0) {
@@ -586,7 +621,8 @@ export function usePDFProcessor() {
           }
           
           const pdfBytes = await chunkPdf.save();
-          zip.file(`document-${chunkIndex + 1}.pdf`, pdfBytes);
+          zip.file(`${sanitizedName}-${chunkIndex + 1}.pdf`, pdfBytes);
+          setProgress({ current: chunkIndex + 1, total: chunks.length });
         }
       }
 
@@ -594,7 +630,7 @@ export function usePDFProcessor() {
       const url = URL.createObjectURL(content);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'split-pages.zip';
+      link.download = `${sanitizedName}-split.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -604,6 +640,7 @@ export function usePDFProcessor() {
       console.error(err);
     } finally {
       setLoading(false);
+      setProgress(null);
     }
   }, [pages, pdfFiles]);
 
@@ -636,6 +673,7 @@ export function usePDFProcessor() {
     pages,
     loading,
     error,
+    progress,
     addPDFs,
     togglePageSelection,
     selectAll,

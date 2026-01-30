@@ -115,10 +115,11 @@ export function PageRangeSelector({ totalPages, onSelectRange, disabled }: PageR
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <Button
               variant="outline"
               size="sm"
+              className="text-xs sm:text-sm"
               onClick={() => setRangeInput('1-' + totalPages)}
             >
               All
@@ -126,20 +127,23 @@ export function PageRangeSelector({ totalPages, onSelectRange, disabled }: PageR
             <Button
               variant="outline"
               size="sm"
+              className="text-xs sm:text-sm"
               onClick={() => setRangeInput(Array.from({ length: Math.ceil(totalPages / 2) }, (_, i) => i * 2 + 1).join(', '))}
             >
-              Odd pages
+              Odd
             </Button>
             <Button
               variant="outline"
               size="sm"
+              className="text-xs sm:text-sm"
               onClick={() => setRangeInput(Array.from({ length: Math.floor(totalPages / 2) }, (_, i) => (i + 1) * 2).join(', '))}
             >
-              Even pages
+              Even
             </Button>
             <Button
               variant="outline"
               size="sm"
+              className="text-xs sm:text-sm"
               onClick={() => setRangeInput('1-' + Math.ceil(totalPages / 2))}
             >
               First half
@@ -147,6 +151,7 @@ export function PageRangeSelector({ totalPages, onSelectRange, disabled }: PageR
             <Button
               variant="outline"
               size="sm"
+              className="text-xs sm:text-sm col-span-2 sm:col-span-1"
               onClick={() => setRangeInput((Math.ceil(totalPages / 2) + 1) + '-' + totalPages)}
             >
               Second half
